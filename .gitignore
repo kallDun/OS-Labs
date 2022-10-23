@@ -2,3 +2,5 @@
 *.out
 *.iml
 *.o
+cmake-build-debug
+CMakeLists
