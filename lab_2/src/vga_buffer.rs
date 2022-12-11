@@ -2,25 +2,24 @@ const BUF_ADDR: u32 = 0xb8000;
 const HEIGHT: u32 = 25;
 const WIDTH: u32 = 80;
 
-pub struct AsciiChar {
-    pub char_byte: u8,
-    pub color_byte: u8
-}
-
 #[derive(PartialEq)]
 pub enum Alignment {
     Left,
     Right,
     Center
 }
-
 pub enum Color {
-    LightGreen, //0xa
-    Black, //0x0
-    Blue, //0x1
-    Red, //0x4
-    Yellow, //0xe
-    White //0xf
+    LightGreen = 0xa,
+    Black = 0x0,
+    Blue = 0x1,
+    Red = 0x4,
+    Yellow = 0xe,
+    White = 0xf
+}
+
+pub struct AsciiChar {
+    pub char_byte: u8,
+    pub color_byte: u8
 }
 
 pub struct Screen {
@@ -44,7 +43,7 @@ impl Screen {
     pub fn new(color: Color, align: Alignment) -> Screen {
         let mut screen = Screen{
             buffer: BUF_ADDR as *mut u8,
-            color: 0,
+            color: color as u8,
             align,
             line_offset: 0,
             char_offset: 0,
@@ -55,14 +54,6 @@ impl Screen {
             Alignment::Right => WIDTH - 1,
             Alignment::Center => WIDTH / 2
         };
-        screen.color = match color {
-          Color::LightGreen => 0xa,
-          Color::Black => 0x0,
-          Color::Blue => 0x1,
-          Color::Red => 0x4,
-          Color::Yellow => 0xe,
-          Color::White => 0xf
-        };
         return screen;
     }
     pub fn write_char(&self, offset: u32, char: AsciiChar) {
@@ -71,7 +62,6 @@ impl Screen {
             *self.buffer.offset(offset as isize * 2 + 1) = char.color_byte;
         }
     }
-
     pub fn read_char(&self, offset: u32) -> AsciiChar {
         unsafe {
             return AsciiChar{
@@ -80,7 +70,13 @@ impl Screen {
             }
         }
     }
-
+    pub fn write_arr(&self, array: &[[u8; 80]; 25]){
+        for i in 0..25 {
+            for j in 0..80 {
+                self.write_char(i * WIDTH + j, AsciiChar{char_byte: array[i as usize][j as usize], color_byte: self.color});
+            }
+        }
+    }
 
 
     pub fn print(&mut self, s: &str) {
@@ -89,32 +85,28 @@ impl Screen {
                 self.new_line();
             }
             else{
-                let mut line_offset;
-                if self.line_offset == HEIGHT{
-                    line_offset = HEIGHT - 1;
+                if self.symbols_count == WIDTH {
+                    self.new_line();
                 }
-                else{
-                    line_offset = self.line_offset;
-                }
+                let line_offset : u32 = if self.line_offset > HEIGHT - 1 { HEIGHT - 1 } else { self.line_offset };
 
-                if self.align == Alignment::Center{
-                    if self.symbols_count != 0 && &self.symbols_count % 2 != 0 {
+
+                if self.align == Alignment::Center {
+                    if &self.symbols_count % 2 != 0 {
                         self.offset_line_to_left(line_offset);
                         self.char_offset -= 1;
                     }
                 }
                 else if self.align == Alignment::Right{
-                    self.offset_line_to_left(line_offset);
-                    self.char_offset -= 1;
+                    if self.symbols_count != 0{
+                        self.offset_line_to_left(line_offset);
+                        self.char_offset -= 1;
+                    }
                 }
 
                 self.write_char(line_offset * WIDTH + self.char_offset, AsciiChar{char_byte: char, color_byte: self.color});
-                self.char_offset += 1;
                 self.symbols_count += 1;
-
-                if self.char_offset == WIDTH{
-                    self.new_line();
-                }
+                self.char_offset += 1;
             }
         }
     }
@@ -138,18 +130,18 @@ impl Screen {
 
     fn offset_all_to_top(&mut self) {
         for i in 0..HEIGHT-1 {
-            for j in 0..WIDTH{
+            for j in 0..WIDTH {
                 self.write_char(i * WIDTH + j, self.read_char((i + 1) * WIDTH + j));
             }
         }
     }
     fn offset_line_to_left(&mut self, line : u32) {
-        for j in 0..WIDTH-1{
+        for j in 0..WIDTH-1 {
             self.write_char(line * WIDTH + j, self.read_char(line * WIDTH + j + 1));
         }
     }
     fn clear_last_line(&mut self) {
-        for j in 0..WIDTH{
+        for j in 0..WIDTH {
             self.write_char((HEIGHT - 1) * WIDTH + j, AsciiChar{char_byte: 0, color_byte: self.color});
         }
     }
