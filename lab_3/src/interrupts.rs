@@ -15,7 +15,7 @@ lazy_static! {
         let mut idt = InterruptDescriptorTable::new();
         idt.double_fault.set_handler_fn(double_fault_handler);
         idt[TIMER_INTERRUPT as usize].set_handler_fn(timer_interrupt_handler);
-        //idt[KEYBOARD_INTERRUPT as usize].set_handler_fn(keyboard_interrupt_handler);
+        idt[KEYBOARD_INTERRUPT as usize].set_handler_fn(keyboard_interrupt_handler);
         idt
     };
 }

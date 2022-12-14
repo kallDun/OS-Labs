@@ -11,6 +11,7 @@ use crate::vga_buf::SCREEN;
 mod vga_buf;
 mod interrupts;
 mod shell;
+mod file_system;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -23,24 +24,16 @@ fn panic(_info: &PanicInfo) -> ! {
 
 fn my_keyboard_handler(key: DecodedKey) {
 
-    //shell::handle_keyboard_interrupt(key);
-
-    print!(".");
-
-    match key {
-        DecodedKey::Unicode(k) => print!("{}", k),
-        _ => print!("_")
-    }
+    shell::handle_keyboard_interrupt(key);
 }
 
 fn my_timer_handler() {
-    print!(".");
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     interrupts::set_keyboard_interrupt_handler(my_keyboard_handler);
-    //interrupts::set_timer_interrupt_handler(my_timer_handler);
+    interrupts::set_timer_interrupt_handler(my_timer_handler);
     interrupts::init();
     loop {}
 }
