@@ -13,17 +13,19 @@ use crate::vga_buffer::{Alignment, Color, Screen};
 /// This function is called on panic.
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    let mut screen = Screen::new(Color::LightGreen, Alignment::Left);
+    let mut screen = Screen::new(Color::Black, Color::Red, Alignment::Left);
     write!(screen, "{:?}", _info);
     loop {}
 }
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    let mut screen = Screen::new(Color::LightGreen, Alignment::Left);
-    /*for i in 0..100 {
+    let mut screen = Screen::new(Color::Red, Color::LightGreen, Alignment::Left);
+    for i in 0..100 {
         write!(screen, "Number {}\n", i);
     }
-    loop {}*/
-    game_of_life(&mut screen);
+    loop {}
+
+    /*let mut screen = Screen::new(Color::LightGreen, Color::Black, Alignment::Left);
+    game_of_life(&mut screen);*/
 }
