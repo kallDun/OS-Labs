@@ -30,8 +30,8 @@ const MAP: [&str; 25] = [
     "                                                                                "
 ];
 
-const LIVE_CELL: u8 = 'x' as u8;
-const DEAD_CELL: u8 = 0;
+const LIVE_CELL: u8 = b'x';
+const DEAD_CELL: u8 = b' ';
 
 pub fn game_of_life(screen: &mut Screen) -> ! {
     let mut current_gen: [[u8; 80]; 25] = [[0; 80]; 25];

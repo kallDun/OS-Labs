@@ -24,7 +24,8 @@ pub struct AsciiChar {
 
 pub struct Screen {
     buffer: *mut u8,
-    color: u8,
+    color_background: u8,
+    color_foreground: u8,
     align: Alignment,
     line_offset: u32,
     char_offset: u32,
@@ -40,10 +41,11 @@ impl core::fmt::Write for Screen {
 
 impl Screen {
 
-    pub fn new(color: Color, align: Alignment) -> Screen {
+    pub fn new(foreground: Color, background: Color, align: Alignment) -> Screen {
         let mut screen = Screen{
             buffer: BUF_ADDR as *mut u8,
-            color: color as u8,
+            color_background: background as u8,
+            color_foreground: foreground as u8,
             align,
             line_offset: 0,
             char_offset: 0,
@@ -59,7 +61,12 @@ impl Screen {
     pub fn write_char(&self, offset: u32, char: AsciiChar) {
         unsafe {
             *self.buffer.offset(offset as isize * 2) = char.char_byte;
-            *self.buffer.offset(offset as isize * 2 + 1) = char.color_byte;
+            if char.char_byte != 0{
+                *self.buffer.offset(offset as isize * 2 + 1) = char.color_byte;
+            }
+            else{
+                *self.buffer.offset(offset as isize * 2 + 1) = Color::Black as u8;
+            }
         }
     }
     pub fn read_char(&self, offset: u32) -> AsciiChar {
@@ -73,7 +80,8 @@ impl Screen {
     pub fn write_arr(&self, array: &[[u8; 80]; 25]){
         for i in 0..25 {
             for j in 0..80 {
-                self.write_char(i * WIDTH + j, AsciiChar{char_byte: array[i as usize][j as usize], color_byte: self.color});
+                self.write_char(i * WIDTH + j, AsciiChar{char_byte: array[i as usize][j as usize],
+                    color_byte: (self.color_background << 4) | self.color_foreground});
             }
         }
     }
@@ -104,7 +112,7 @@ impl Screen {
                     }
                 }
 
-                self.write_char(line_offset * WIDTH + self.char_offset, AsciiChar{char_byte: char, color_byte: self.color});
+                self.write_char(line_offset * WIDTH + self.char_offset, AsciiChar{char_byte: char, color_byte: (self.color_background << 4) | self.color_foreground});
                 self.symbols_count += 1;
                 self.char_offset += 1;
             }
@@ -142,7 +150,7 @@ impl Screen {
     }
     fn clear_last_line(&mut self) {
         for j in 0..WIDTH {
-            self.write_char((HEIGHT - 1) * WIDTH + j, AsciiChar{char_byte: 0, color_byte: self.color});
+            self.write_char((HEIGHT - 1) * WIDTH + j, AsciiChar{char_byte: 0, color_byte: (self.color_background << 4) | self.color_foreground});
         }
     }
 }
