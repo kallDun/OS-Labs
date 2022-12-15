@@ -187,7 +187,8 @@ impl FileSys{
     fn cmd_curr_dir(&mut self){
         
         let mut curr_dir = self.dirs[self.find_dir_index(self.curr_dir)];
-        print_name(curr_dir.name, true, true);
+        self.recursive_dirs_back_reading(curr_dir);
+        //print_name(curr_dir.name, true, true);
     }
 
     fn cmd_get_dir_tree(&mut self){
@@ -195,12 +196,13 @@ impl FileSys{
         let mut curr_dir = self.dirs[self.find_dir_index(self.curr_dir)];
         print_name(curr_dir.name, true, true);
 
-        self.recursive_directories_name_reading(curr_dir, 1);
+        self.recursive_dirs_front_reading
+        (curr_dir, 1);
     }
 
     // auxiliary
 
-    fn recursive_directories_name_reading(&mut self, parent_dir: Dir, nesting: usize){
+    fn recursive_dirs_front_reading(&mut self, parent_dir: Dir, nesting: usize){
 
         for i in 0..parent_dir.child_count{
             let dir_index = self.find_dir_index(parent_dir.child_indexes[i]);
@@ -213,8 +215,30 @@ impl FileSys{
                 }
             }
             print_name(child.name, true, true);
-            self.recursive_directories_name_reading(child, nesting + 1);
+            self.recursive_dirs_front_reading
+            (child, nesting + 1);
         }
+    }
+
+    fn recursive_dirs_back_reading(&mut self, child: Dir) -> usize{
+        let parent = self.get_parent(child);
+        let mut nesting : usize = 0;
+        if (parent.index != child.index){
+            nesting = self.recursive_dirs_back_reading(parent);
+        }
+
+        for i in 0..nesting{   
+            let backspaces_count = 4;
+            for j in 0..backspaces_count{
+                print!(" ");
+            }
+        }
+        print_name(child.name, true, true);
+        return nesting + 1;
+    }
+
+    fn get_parent(&mut self, child: Dir) -> Dir{
+        return self.dirs[self.find_dir_index(child.parent_index)];
     }
 
     fn find_dir_index(&mut self, index: usize) -> usize{
